@@ -11,6 +11,7 @@
 //#include "machine.h"
 #include "Autosteer.h"
 #include "common.h"
+#include "DHCP.h"
 
 // Send byte arrays to AgIO
 void sendUDPbytes(uint8_t *message, int msgLen)
@@ -468,6 +469,12 @@ void rtcmHandler(struct mg_connection *rtcm, int ev, void *ev_data, void *fn_dat
   NTRIPusage.timeOut();
 }
 
+// Process data received on port 2233
+void dhcpHandler(struct mg_connection *dhcp, int ev, void *ev_data, void *fn_data)
+{
+
+}
+
 // Setup UDP comms channels
 void udpSetup()
 {
@@ -478,6 +485,7 @@ void udpSetup()
 
   char pgnListenURL[50];
   char rtcmListen[150];// char rtcmListen[50];
+  char dhcpListen[DHCP_MESSAGE_SIZE];
   mg_snprintf(pgnListenURL, sizeof(pgnListenURL), "udp://%d.%d.%d.126:8888", netConfig.currentIP[0], netConfig.currentIP[1], netConfig.currentIP[2]);
   // Serial.println(steerListen);
   mg_snprintf(rtcmListen, sizeof(rtcmListen), "udp://%d.%d.%d.126:2233", netConfig.currentIP[0], netConfig.currentIP[1], netConfig.currentIP[2]);
@@ -485,6 +493,7 @@ void udpSetup()
   //bool listenPGNs = false;
   //bool listenRtcm = false;
   //bool agioConnect = false;
+  mg_snprintf(dhcpListen, sizeof(dhcpListen), "udp://%d.%d.%d.126:67", netConfig.currentIP[0], netConfig.currentIP[1], netConfig.currentIP[2]);
 
   if (mg_listen(&g_mgr, pgnListenURL, pgnHandler, NULL) != NULL)
   {
@@ -504,6 +513,15 @@ void udpSetup()
   else
   {
     MG_DEBUG(("RTCM on UDP 2233 did not open"));
+  }
+
+  if (mg_listen(&g_mgr, dhcpListen, dhcpHandler, NULL) != NULL)
+  {
+    MG_DEBUG(("Listening for DHCP on UDP 67"));
+  }
+  else
+  {
+    MG_DEBUG(("DHCP on UDP 67 did not open"));
   }
 
   // Create UDP connection to broadcast address

@@ -481,6 +481,7 @@ void dhcpHandler(struct mg_connection *dhcpPacket, int ev, void *ev_data, void *
     memcpy(buffer, dhcpPacket->recv.buf, dhcpPacket->recv.len);
         
     // generate DHCP message
+    // request & response buffer, request length, respond from our current ip, gateway ip, start ip assignments at x.x.x.10, set domain to agopengps.com
     uint16_t responseLength = DHCPreply((RIP_MSG*)buffer, dhcpPacket->recv.len, netConfig.currentIP, netConfig.gatewayIP, 10, "agopengps.com");
 
     if (mg_send(dhcpPacket, buffer, responseLength) <= 0)

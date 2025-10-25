@@ -82,7 +82,7 @@ int populatePacket(byte *packet, int currLoc, byte marker, byte *what, int dataS
   return dataSize + 2;
 }
 
-int DHCPreply(RIP_MSG *packet, int packetSize, byte *serverIP, byte startHost, char *domainName) {
+int DHCPreply(RIP_MSG *packet, int packetSize, byte *serverIP, byte *gatewayIP, byte startHost, char *domainName) {
   if (packet->op != DHCP_BOOTREQUEST) return 0; // limited check that we're dealing with DHCP/BOOTP request
 
   byte OPToffset = (byte*)packet->OPT-(byte*)packet;
@@ -154,7 +154,7 @@ int DHCPreply(RIP_MSG *packet, int packetSize, byte *serverIP, byte startHost, c
         break;
       case dhcpDns:
       case dhcpRoutersOnSubnet:
-        currLoc += populatePacket(packet->OPT, currLoc, reqList[i], serverIP, 4);
+        currLoc += populatePacket(packet->OPT, currLoc, reqList[i], gatewayIP, 4);
         break;
       case dhcpDomainName:
         if (domainName && strlen(domainName))

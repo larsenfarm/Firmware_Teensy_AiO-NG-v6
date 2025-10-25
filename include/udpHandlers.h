@@ -469,10 +469,27 @@ void rtcmHandler(struct mg_connection *rtcm, int ev, void *ev_data, void *fn_dat
   NTRIPusage.timeOut();
 }
 
-// Process data received on port 2233
-void dhcpHandler(struct mg_connection *dhcp, int ev, void *ev_data, void *fn_data)
+// Process data received on port 67 (DHCP)
+void dhcpHandler(struct mg_connection *dhcpPacket, int ev, void *ev_data, void *fn_data)
 {
+  if (g_mgr.ifp->state != MG_TCPIP_STATE_READY)
+    return; // Check if IP stack is up.
 
+  if (ev == MG_EV_READ && dhcpPacket->recv.len > 0 && dhcpPacket->recv.len <= DHCP_MESSAGE_SIZE)
+  {
+    uint8_t buffer[DHCP_MESSAGE_SIZE];
+    memcpy(buffer, dhcpPacket->recv.buf, dhcpPacket->recv.len);
+        
+    // generate DHCP message
+    uint16_t responseLength = DHCPreply((RIP_MSG*)buffer, dhcpPacket->recv.len, netConfig.currentIP, netConfig.gatewayIP, 10, "agopengps.com");
+
+    if (mg_send(dhcpPacket, buffer, responseLength) <= 0)
+    {
+      Serial.println("DHCP Send failed.\r\n");
+    }
+    mg_iobuf_del(&dhcpPacket->send, 0, responseLength);
+  }
+  mg_iobuf_del(&dhcpPacket->recv, 0, dhcpPacket->recv.len);
 }
 
 // Setup UDP comms channels
@@ -485,7 +502,7 @@ void udpSetup()
 
   char pgnListenURL[50];
   char rtcmListen[150];// char rtcmListen[50];
-  char dhcpListen[DHCP_MESSAGE_SIZE];
+  char dhcpListen[50];
   mg_snprintf(pgnListenURL, sizeof(pgnListenURL), "udp://%d.%d.%d.126:8888", netConfig.currentIP[0], netConfig.currentIP[1], netConfig.currentIP[2]);
   // Serial.println(steerListen);
   mg_snprintf(rtcmListen, sizeof(rtcmListen), "udp://%d.%d.%d.126:2233", netConfig.currentIP[0], netConfig.currentIP[1], netConfig.currentIP[2]);

@@ -134,5 +134,5 @@ typedef struct RIP_MSG {
 	byte		OPT[]; // 240 offset
 };
 
-int DHCPreply(RIP_MSG *packet, int packetSize, byte *serverIP, byte startHost, char *domainName);
+int DHCPreply(RIP_MSG *packet, int packetSize, byte *serverIP, byte *gatewayIP, byte startHost, char *domainName);
 #endif
